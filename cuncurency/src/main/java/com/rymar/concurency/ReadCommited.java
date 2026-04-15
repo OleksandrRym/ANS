@@ -12,7 +12,9 @@ import java.sql.PreparedStatement;
 /// and therefore DELETE affects 0 rows.
 
 public class ReadCommited extends BaseRepository {
+
   public static void main(String[] args) throws Exception {
+
     Connection tx1 = DriverManager.getConnection(URL, USER, PASS);
     Connection tx2 = DriverManager.getConnection(URL, USER, PASS);
     tx1.setAutoCommit(false);

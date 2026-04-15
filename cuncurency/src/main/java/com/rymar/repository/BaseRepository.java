@@ -1,5 +1,7 @@
 package com.rymar.repository;
 
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import java.sql.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -11,21 +13,23 @@ public class BaseRepository {
   protected static final String USER = "postgres";
   protected static final String PASS = "postgres";
 
-  private static String INIT_SQL = """
-                    CREATE TABLE IF NOT EXISTS website (id SERIAL PRIMARY KEY,hits INT);
-                    TRUNCATE website;
-                    INSERT INTO website (hits) VALUES (9);""";
+  protected static HikariDataSource HIKARI_POOL = null;
+
+  protected static void setupBaseRepo() {
+    HikariConfig config = new HikariConfig();
+    config.setJdbcUrl(URL);
+    config.setUsername(USER);
+    config.setPassword(PASS);
+    config.setMaximumPoolSize(5);
+    HIKARI_POOL = new HikariDataSource(config);
+  }
 
   public static void setInitSql(String initSql) {
-    INIT_SQL = initSql;
-    executorService.execute(
-        () -> {
-          try (Connection tx1 = DriverManager.getConnection(URL, USER, PASS)) {
-            PreparedStatement ps = tx1.prepareStatement(INIT_SQL);
-            ps.execute();
-          } catch (SQLException e) {
-            throw new RuntimeException(e);
-          }
-        });
+    try (Connection tx1 = HIKARI_POOL.getConnection()) {
+      PreparedStatement ps = tx1.prepareStatement(initSql);
+      ps.execute();
+    } catch (SQLException e) {
+        throw new RuntimeException(e);
+    }
   }
 }
