@@ -8,8 +8,8 @@ import java.util.concurrent.Future;
 import lombok.SneakyThrows;
 
 ///
-/// To demonstrate the non-repeatable read anomaly,
-/// set tx1 and tx2 to the Read Committed isolation level.
+/// Демонстрація NonRepeatable read аномалії
+/// "TX 1 при однакових SELECT має різні значення"
 ///
 public class NonRepeatableRead extends BaseRepository {
 
@@ -32,15 +32,9 @@ public class NonRepeatableRead extends BaseRepository {
     Connection tx1 = getConnection(Connection.TRANSACTION_READ_COMMITTED);
     Connection tx2 = getConnection(Connection.TRANSACTION_READ_COMMITTED);
 
-
-    executorService.execute(
-        () -> {
-          runTx1(tx1);
-        });
-    executorService.execute(
-        () -> {
-          runTx2(tx2);
-        });
+    executorService.execute(() -> {runTx1(tx1);});
+    executorService.execute(() -> {runTx2(tx2);});
+    executorService.shutdown();
   }
 
   @SneakyThrows

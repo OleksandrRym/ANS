@@ -9,8 +9,10 @@ import java.sql.ResultSet;
 import java.util.concurrent.Future;
 import lombok.SneakyThrows;
 
-/// To demonstrate Phantom Read in TRANSACTION_READ_COMMITTED.
-/// REMEMBER: in TRANSACTION_REPEATABLE_READ, this anomaly does not occur.
+///
+/// Демонстрація PhantomRead аномалії
+/// TX 1 при однакових запитах отримує різну множину рядків
+///
 public class PhantomRead extends BaseRepository {
 
   private static final String SELECT_SQL = "SELECT COUNT(*) from users";
@@ -34,14 +36,9 @@ public class PhantomRead extends BaseRepository {
     Connection tx1 = getConnection(Connection.TRANSACTION_REPEATABLE_READ);
     Connection tx2 = getConnection(Connection.TRANSACTION_REPEATABLE_READ);
 
-    executorService.execute(
-        () -> {
-          runTx1(tx1);
-        });
-    executorService.execute(
-        () -> {
-          runTx2(tx2);
-        });
+    executorService.execute(() -> {runTx1(tx1);});
+    executorService.execute(() -> {runTx2(tx2);});
+    executorService.shutdown();
   }
 
   @SneakyThrows

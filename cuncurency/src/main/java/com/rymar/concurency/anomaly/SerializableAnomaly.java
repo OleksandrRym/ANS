@@ -9,11 +9,13 @@ import java.sql.ResultSet;
 import java.util.concurrent.Future;
 import lombok.SneakyThrows;
 
+///
+/// Демонстрація SerializableAnomaly read аномалії
+///
+/// У Cистемі підтримки має мати хоча б 1 активнтй NOC- engineer
+/// Для коректної логіки слід використовувати рівень TRANSACTION_SERIALIZABLE
+///
 public class SerializableAnomaly extends BaseRepository {
-  ///
-  /// У Cистемі підтримки має мати хоча б 1 активнтй NOC- engineer
-  ///
-  ///
 
   private static final String INIT_SQL =
       """
@@ -38,14 +40,13 @@ public class SerializableAnomaly extends BaseRepository {
     setupBaseRepo();
     initSqlTask();
 
-    Connection tx1 = getConnection(Connection.TRANSACTION_READ_COMMITTED);
-    Connection tx2 = getConnection(Connection.TRANSACTION_READ_COMMITTED);
-    Connection tx3 = getConnection(Connection.TRANSACTION_READ_COMMITTED);
+    Connection tx1 = getConnection(Connection.TRANSACTION_SERIALIZABLE);
+    Connection tx2 = getConnection(Connection.TRANSACTION_SERIALIZABLE);
+    Connection tx3 = getConnection(Connection.TRANSACTION_SERIALIZABLE);
 
     executorService.execute(() -> runTx1(tx1));
     executorService.execute(() -> runTx2(tx2));
     executorService.execute(() -> runTx3(tx3));
-
     executorService.shutdown();
   }
 
@@ -85,8 +86,7 @@ public class SerializableAnomaly extends BaseRepository {
       ps.setInt(1, 1);
       ps.execute();
     }
-
-    sleep(2000);
+    sleep(1000);
     tx.commit();
 
     System.out.println("TX1: COMMIT");
@@ -105,7 +105,7 @@ public class SerializableAnomaly extends BaseRepository {
       ps.execute();
     }
 
-    sleep(2000);
+    sleep(1000);
     tx.commit();
 
     System.out.println("TX2: COMMIT");
@@ -113,7 +113,7 @@ public class SerializableAnomaly extends BaseRepository {
 
   @SneakyThrows
   private static void runTx3(Connection tx) {
-    sleep(5000);
+    sleep(2000);
 
     System.out.println("TX3: FINAL STATE");
     PreparedStatement ps = tx.prepareStatement("SELECT * FROM users");
@@ -125,7 +125,7 @@ public class SerializableAnomaly extends BaseRepository {
 
   @SneakyThrows
   private static void printResult(ResultSet resultSet) {
-    if (resultSet.next()) {
+    while (resultSet.next()) {
       int id = resultSet.getInt("id");
       boolean active = resultSet.getBoolean("active");
       System.out.println("id=" + id + " active=" + active);
