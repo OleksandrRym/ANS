@@ -83,15 +83,6 @@ public class NonRepeatableRead extends BaseRepository {
     System.out.println("TX2: Commit");
   }
 
-  @SneakyThrows
-  private static void printSnapshot(Connection tx) {
-    Statement stmt = tx.createStatement();
-    ResultSet rs = stmt.executeQuery("SELECT txid_current_snapshot();");
-    if (rs.next()) {
-      String snapshot = rs.getString(1);
-      System.out.println("Snapshot: " + snapshot);
-    }
-  }
 
   @SneakyThrows
   private static void printResult(ResultSet resultSet) {

@@ -2,6 +2,8 @@ package com.rymar.repository;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import lombok.SneakyThrows;
+
 import java.sql.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -32,4 +34,22 @@ public class BaseRepository {
         throw new RuntimeException(e);
     }
   }
+
+    @SneakyThrows
+    public static void printCountRows(ResultSet resultSet) {
+        if (resultSet.next()) {
+            int count = resultSet.getInt(1);
+            System.out.println("Count rows = " + count);
+        }
+    }
+
+    @SneakyThrows
+    public static void printSnapshot(Connection tx) {
+        Statement stmt = tx.createStatement();
+        ResultSet rs = stmt.executeQuery("SELECT txid_current_snapshot();");
+        if (rs.next()) {
+            String snapshot = rs.getString(1);
+            System.out.println("Snapshot: " + snapshot);
+        }
+    }
 }
