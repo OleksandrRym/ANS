@@ -8,8 +8,8 @@ Contains examples of concurrency anomalies that can occur in PostgreSQL:
 - [Phantom read](concurency/anomaly/PhantomRead.java)
 - [Serialization anomaly](concurency/anomaly/SerializableAnomaly.java)
 
-#### 📂 `locking/`
-Contains examples of locking mechanisms in PostgreSQL:
-- Row-level locks
-- Table-level locks
+#### 📂 `internal/`
+- [MVCC](cuncurency/src/main/java/com/rymar/concurency/internal/MVCCDemo.java)
+- [VACUUM](cuncurency/src/main/java/com/rymar/concurency/internal/VacuumDemo.java)
 
+- 

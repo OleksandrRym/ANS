@@ -4,6 +4,17 @@ import com.rymar.repository.BaseRepository;
 import java.sql.Connection;
 import lombok.SneakyThrows;
 
+///
+/// Демонстрація MVCC механізму в PostgreSQL
+///
+/// Клас презентує приховані системні поля рядка (tuple)
+/// та логіку версіонування даних, через яку реалізується контроль багатопоточності
+///
+/// Відображається :
+/// - створення рядка (set xmin)
+/// - оновлення рядка (створення нової версії та t_ctid chain)
+/// - видалення рядка (set xmax)
+///
 public class MVCCDemo extends BaseRepository {
 
   private static final String SELECT_SQL =
@@ -38,8 +49,8 @@ public class MVCCDemo extends BaseRepository {
 
   @SneakyThrows
   private static void create(Connection conn) {
-    System.out.println("=== Крок 1: CREATE (INSERT) ===");
-    System.out.println("Надсилаємо:");
+    System.out.println("\n=== Крок 1: CREATE (INSERT) ===");
+    System.out.print("Надсилаємо:");
     System.out.println("INSERT INTO user_balance (id, amount) VALUES (1, 100);\n");
     conn.createStatement().execute("INSERT INTO user_balance (id, amount) VALUES (1, 100);");
 
@@ -49,7 +60,7 @@ public class MVCCDemo extends BaseRepository {
   @SneakyThrows
   private static void update(Connection conn) {
     System.out.println("\n=== Крок 2: UPDATE (Нова версія) ===");
-    System.out.println("Надсилаємо:");
+    System.out.print("Надсилаємо:");
     System.out.println("UPDATE user_balance SET amount = 200 WHERE id = 1;\n");
     conn.createStatement().execute("UPDATE user_balance SET amount = 200 WHERE id = 1;");
 
@@ -59,7 +70,7 @@ public class MVCCDemo extends BaseRepository {
   @SneakyThrows
   private static void delete(Connection conn) {
     System.out.println("\n=== Крок 3: DELETE (Позначаємо xmax) ===");
-    System.out.println("Надсилаємо:");
+    System.out.print("Надсилаємо:");
     System.out.println("DELETE FROM user_balance WHERE id = 1;\n");
     conn.createStatement().execute("DELETE FROM user_balance WHERE id = 1;");
 
