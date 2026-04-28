@@ -4,15 +4,12 @@ import static java.lang.Thread.sleep;
 
 import com.rymar.repository.BaseRepository;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.util.concurrent.Future;
 import lombok.SneakyThrows;
 
-public class AccessExclusiveLock extends BaseRepository {
-  private static final String LOCK_SQL = "LOCK TABLE users IN ACCESS EXCLUSIVE MODE;";
-  private static final String SELECT_SQL = "SELECT COUNT(*) FROM users ";
-  private static final String INSERT_SQL = "INSERT INTO users (name) VALUES ('Alex');";
+public class DeadlockDemo extends BaseRepository {
+  private static final String LOCK_ROW_1 = "SELECT * FROM users WHERE id = 1 FOR UPDATE;";
+  private static final String LOCK_ROW_2 = "SELECT * FROM users WHERE id = 2 FOR UPDATE;";
   private static final String INIT_SQL =
       """
           DROP TABLE IF EXISTS users;
@@ -21,6 +18,8 @@ public class AccessExclusiveLock extends BaseRepository {
               name TEXT NOT NULL
           );
           TRUNCATE TABLE users;
+          INSERT INTO users (name) VALUES ('A');
+          INSERT INTO users (name) VALUES ('B');
                     """;
 
   @SneakyThrows
@@ -59,26 +58,32 @@ public class AccessExclusiveLock extends BaseRepository {
   @SneakyThrows
   private static void runTx1(Connection tx1) {
     System.out.println("TX1: START");
-    PreparedStatement s1 = tx1.prepareStatement(LOCK_SQL);
-    s1.execute();
-    sleep(5000);
+
+    tx1.prepareStatement(LOCK_ROW_1).execute();
+    System.out.println("TX1: locked 1");
+
+    sleep(9000);
+
+    tx1.prepareStatement(LOCK_ROW_2).execute();
+    System.out.println("TX1: locked 2");
+
     tx1.commit();
-    System.out.println("TX1: Commit");
   }
 
   @SneakyThrows
-  private static void runTx2(Connection tx) {
-    sleep(1000);
+  private static void runTx2(Connection tx2) {
+    sleep(500);
+
     System.out.println("TX2: START");
-    var start = System.nanoTime();
-    PreparedStatement statement = tx.prepareStatement(SELECT_SQL);
-    ResultSet resultSet = statement.executeQuery();
-    printCountRows(resultSet);
-    var end = System.nanoTime();
-    var duration = end - start;
-    System.out.print("Blocking: ");
-    System.out.println(duration / Math.pow(10, -9));
-    tx.commit();
-    System.out.println("TX2: Commit");
+
+    tx2.prepareStatement(LOCK_ROW_2).execute();
+    System.out.println("TX2: locked 2");
+
+    sleep(2000);
+
+    tx2.prepareStatement(LOCK_ROW_1).execute();
+    System.out.println("TX2: locked 1");
+
+    tx2.commit();
   }
 }
