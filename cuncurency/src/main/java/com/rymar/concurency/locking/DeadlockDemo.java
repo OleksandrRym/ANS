@@ -54,36 +54,42 @@ public class DeadlockDemo extends BaseRepository {
     tx.setTransactionIsolation(lvl);
     return tx;
   }
+    private static void runTx1(Connection tx1) {
+        try {
+            System.out.println("TX1: START");
+            tx1.prepareStatement(LOCK_ROW_1).execute();
+            System.out.println("TX1: locked 1");
+            sleep(1000);
+            System.out.println("TX1: try lock 2");
+            tx1.prepareStatement(LOCK_ROW_2).execute();
+            System.out.println("TX1: locked 2");
+            tx1.commit();
+        } catch (Exception e) {
+            System.out.println("TX1 ERROR: " + e.getMessage());
+            rollbackQuiet(tx1);
+        }
+    }
 
-  @SneakyThrows
-  private static void runTx1(Connection tx1) {
-    System.out.println("TX1: START");
+    private static void runTx2(Connection tx2) {
+        try {
+            sleep(200);
+            System.out.println("TX2: START");
+            tx2.prepareStatement(LOCK_ROW_2).execute();
+            System.out.println("TX2: locked 2");
+            sleep(1000);
+            System.out.println("TX2: try lock 1");
+            tx2.prepareStatement(LOCK_ROW_1).execute();
+            System.out.println("TX2: locked 1");
+            tx2.commit();
+        } catch (Exception e) {
+            System.out.println("TX2 ERROR: " + e.getMessage());
+            rollbackQuiet(tx2);
+        }
+    }
 
-    tx1.prepareStatement(LOCK_ROW_1).execute();
-    System.out.println("TX1: locked 1");
-
-    sleep(9000);
-
-    tx1.prepareStatement(LOCK_ROW_2).execute();
-    System.out.println("TX1: locked 2");
-
-    tx1.commit();
-  }
-
-  @SneakyThrows
-  private static void runTx2(Connection tx2) {
-    sleep(500);
-
-    System.out.println("TX2: START");
-
-    tx2.prepareStatement(LOCK_ROW_2).execute();
-    System.out.println("TX2: locked 2");
-
-    sleep(2000);
-
-    tx2.prepareStatement(LOCK_ROW_1).execute();
-    System.out.println("TX2: locked 1");
-
-    tx2.commit();
-  }
+    private static void rollbackQuiet(Connection tx) {
+        try {
+            tx.rollback();
+        } catch (Exception ignored) {}
+    }
 }
